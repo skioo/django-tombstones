@@ -12,11 +12,11 @@ class Tombstone(models.Model):
     content_object = GenericForeignKey()
 
     class Meta:
-        unique_together = ('content_type', 'object_id')
+        unique_together = ['content_type', 'object_id']
 
     def __str__(self):
-        # return str(self.content_object) # XXX: costs too much
-        return '{}: {}'.format(self.content_type, self.object_id)
+        # Requires an extra select to fetch the content object, so use sparingly
+        return str(self.content_object)
 
 
 def create_tombstone(obj):
