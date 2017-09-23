@@ -2,8 +2,6 @@ from django.contrib.contenttypes.fields import GenericForeignKey, GenericRelatio
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
 
-from .managers import SoftDeleteManager
-
 
 class Tombstone(models.Model):
     created = models.DateTimeField(auto_now_add=True)
@@ -18,20 +16,29 @@ class Tombstone(models.Model):
         # Requires an extra select to fetch the content object, so use sparingly
         return str(self.content_object)
 
+    @staticmethod
+    def soft_delete(content_type_id, object_id):
+        Tombstone.objects.create(content_type_id=content_type_id, object_id=object_id)
 
-def create_tombstone(obj):
-    Tombstone.objects.create(content_object=obj)
+    @staticmethod
+    def soft_undelete(content_type_id, object_id):
+        Tombstone.objects.filter(content_type_id=content_type_id, object_id=object_id).delete()
+
+
+class HideSoftDeletedManager(models.Manager):
+    def get_queryset(self):
+        return super().get_queryset().filter(tombstones__isnull=True)
 
 
 class SoftDeleteModel(models.Model):
     """
-     Replaces the default manager with one that hides soft-deleted objects.
+    Inherit from this class to enable soft-delete on your model.
 
-     To access the soft-deleted objects, please use the all_including_deleted manager.
-     """
+    Requires the primary key of your model to be of type UUID.
+    """
     tombstones = GenericRelation(Tombstone)
 
-    objects = SoftDeleteManager()
+    objects = HideSoftDeletedManager()
     all_including_deleted = models.Manager()
 
     class Meta:
@@ -40,7 +47,9 @@ class SoftDeleteModel(models.Model):
     def is_deleted(self):
         return self.tombstones.exists()
 
-    is_deleted.boolean = True
-
     def soft_delete(self):
-        create_tombstone(self)
+        Tombstone.objects.create(content_object=self)
+
+    def soft_undelete(self):
+        content_type = ContentType.objects.get_for_model(self)
+        Tombstone.objects.filter(content_type=content_type, object_id=self.pk).delete()

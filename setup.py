@@ -6,7 +6,7 @@ import tombstones
 setup(
     name='django-tombstones',
     version=tombstones.__version__,
-    description='Unintrusive soft-delete',
+    description='Unintrusive soft-delete for django',
     long_description='',
     author='Nicholas Wolff',
     author_email='nwolff@gmail.com',

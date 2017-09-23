@@ -1,38 +1,23 @@
+from django.conf.urls import url
 from django.contrib import admin
 from django.contrib.admin import RelatedOnlyFieldListFilter
+from django.contrib.contenttypes.models import ContentType
+from django.db.models import Count
+from django.http import HttpResponseRedirect
 from django.urls import reverse
 from django.utils.html import format_html
 from django.utils.translation import ugettext_lazy as _
 
-from .models import Tombstone, create_tombstone
-
-
-def link_to_object(ts):
-    text = '{}: {}'.format(ts.content_type.name, ts.object_id)
-    url = reverse('admin:{}_{}_change'.format(
-        ts.content_type.app_label,
-        ts.content_type.model),
-        args=(ts.object_id,))
-    return format_html('<a href="{}">{}</a>', url, text)
-
-
-link_to_object.allow_tags = True
-link_to_object.short_description = _('Soft deleted object')
-
-
-@admin.register(Tombstone)
-class TombstoneAdmin(admin.ModelAdmin):
-    date_hierarchy = 'created'
-    list_display = ['created', link_to_object]
-    search_fields = ['object_id']
-    list_filter = [('content_type', RelatedOnlyFieldListFilter)]
-    readonly_fields = ['created']
+from .models import Tombstone
 
 
 class SoftDeletedListFilter(admin.SimpleListFilter):
-    title = _('deleted')
+    """
+    Hides soft-deleted objects by default. Also gives the option to show all objects, or just the deleted ones.
+    """
+    title = _('Soft deleted')
 
-    parameter_name = 'deleted'
+    parameter_name = 'soft-deleted'
 
     def lookups(self, request, model_admin):
         return (
@@ -57,21 +42,89 @@ class SoftDeletedListFilter(admin.SimpleListFilter):
             }
 
 
-def soft_delete(_modeladmin, _request, queryset):
-    for o in queryset:
-        create_tombstone(o)
+def do_soft_delete(request, content_type_id, object_id):
+    Tombstone.soft_delete(content_type_id, object_id)
+    return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
 
 
-soft_delete.short_description = _('Soft delete selected objects')
+def do_soft_undelete(request, content_type_id, object_id):
+    Tombstone.soft_undelete(content_type_id, object_id)
+    return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
 
 
 class SoftDeleteModelAdmin(admin.ModelAdmin):
-    actions = [soft_delete]
+    """
+    The admin of soft-deletabl;e models should inherit from this class.
+
+    To display a list_filter that hides soft-deleted objects by default, and gives the option to reveal more
+    you should include this list filter:
+
+        list_filter = [SoftDeletedListFilter]
+
+    To display a column in the admin with a button to delete-undelete each object, add this:
+
+        list_display = [..., 'soft_delete_button']
+
+    To display the same button, but in the admin detailed view, you should add a readonly field, like this:
+
+        readonly_fields = [..., 'soft_delete_button']
+    """
     list_filter = [SoftDeletedListFilter]
+    readonly_fields = ['soft_delete_button']
 
     def get_queryset(self, request):
-        qs = self.model.all_including_deleted.get_queryset().prefetch_related('tombstones')
+        # A single query to fetch the model being administered + the number of tombstones attached to the model
+        qs = self.model.all_including_deleted.get_queryset().annotate(tombstone_count=Count('tombstones'))
         ordering = self.get_ordering(request)
         if ordering:
             qs = qs.order_by(*ordering)
         return qs
+
+    def get_urls(self):
+        custom_urls = [
+            url(r'^(?P<content_type_id>.+)/(?P<object_id>.+)/soft_delete/$',
+                self.admin_site.admin_view(do_soft_delete),
+                name='soft-delete'),
+            url(r'^(?P<content_type_id>.+)/(?P<object_id>.+)/soft_undelete/$',
+                self.admin_site.admin_view(do_soft_undelete),
+                name='soft-undelete')
+        ]
+        return custom_urls + super().get_urls()
+
+    def soft_delete_button(self, obj):
+        """
+        Displays a button to delete/undelete the object, depending on its current status.
+        """
+        content_type = ContentType.objects.get_for_model(obj)
+        # To avoid extra queries, use the previously fetched value instead of obj.is_deleted()
+        if obj.tombstone_count > 0:
+            return format_html(
+                '<a class="button" href="{}">Undelete</a>',
+                reverse('admin:soft-undelete', args=[content_type.id, obj.pk]))
+        else:
+            return format_html(
+                '<a class="button" href="{}">Delete</a>',
+                reverse('admin:soft-delete', args=[content_type.id, obj.pk]))
+
+    soft_delete_button.short_description = _('Soft delete')
+
+
+@admin.register(Tombstone)
+class TombstoneAdmin(admin.ModelAdmin):
+    """
+    Even though tombstones are manipulated indirectly when each soft-deletable object is deleted/undeleted,
+    we also want to let the administrator directly manipulate Tombstone objects.
+    """
+    date_hierarchy = 'created'
+    list_display = ['created', 'link_to_soft_deleted_object']
+    search_fields = ['object_id']
+    list_filter = [('content_type', RelatedOnlyFieldListFilter)]
+    readonly_fields = ['created']
+
+    def link_to_soft_deleted_object(self, tombstone):
+        text = '{}: {}'.format(tombstone.content_type.name, tombstone.object_id)
+        url = reverse('admin:{}_{}_change'.format(
+            tombstone.content_type.app_label,
+            tombstone.content_type.model),
+            args=(tombstone.object_id,))
+        return format_html('<a href="{}">{}</a>', url, text)

@@ -4,33 +4,42 @@ django-tombstones
 [![Build Status](https://travis-ci.org/skioo/django-tombstones.svg?branch=master)](https://travis-ci.org/skioo/django-tombstones)
 
 
-Adds soft-delete functionality to django.
+Unintrusive soft-delete for django.
 
 
-Four design choices were made:
+An example admin screen for a soft-deletable model:
 
-1) Does not change the behaviour of model.delete. Instead we add a soft_delete method to model instances.
+![Example admin](docs/soft_delete_admin.png)
 
-2) Does not care about cascading. If there are models with relations, and you soft delete an object, the related objects are untouched.
 
-3) The soft-deletion status of a model is stored in a generic Tombstones table, so each model is not cluttered with some extra 'deleted' attribute.
+Design decisions
+----------------
+
+1) **Only works for models that have a primary key of type UUID**
+
+2) Does not change the behaviour of `Model.delete`. Instead adds `soft_delete` and `soft_undelete` methods to model instances.
+
+3) Does not care about cascading. If you soft-delete an object that has related objects, those related objects are untouched.
+
+4) The soft-deletion state of a model is stored in a generic tombstones table, so each model is not cluttered with any extra `deleted` attribute.
 This means:
-    * Making a model soft-deletable does not require database changes to that models table.
-    * When using django-rest-framework model serializers, there is no need to worry about some 'deleted' attribute.
+    * Making a model soft-deletable does not require database changes to that model's table.
+    * When using django-rest-framework model serializers, there is no need to worry about some `deleted` attribute appearing.
     * When querying soft-deletable models, an extra join to the tombstone table is made.
-
-4) **Only works for models that have a primary key of type UUID**
 
 
 Requirements
 ------------
 
-* **Python**: 3.4 and over
-* **Django**: Tested with django 1.11
+* Python: 3.4 and over
+* Django: Tested with django 1.11
+* django.contrib.contenttypes
 
 
 Usage
 -----
+
+Add tombstone to your `INSTALLED_APPS`, together with the required contenttypes app (most likely already an installed app):
 
     INSTALLED_APPS = (
     ...
@@ -44,32 +53,18 @@ For every model where you want soft-delete, you should inherit from SoftDeleteMo
     class MyModel(SoftDeleteModel):
         ...
 
-Also use the soft-delete-aware ModelAdmin:
+You should also use the soft-delete-aware ModelAdmin, and configure it:
 
+    @admin.register(MyModel)
     class MyModelAdmin(SoftDeleteModelAdmin):
-        actions = [soft_delete] # Shows the soft-delete this object action in the admin list
-        list_filter = [SoftDeletedListFilter] # Displays a list filter on the right of the admin list
-        list_display = [..., 'is_deleted'] # Displays a deleted column on the admin list
+        list_filter = [SoftDeletedListFilter]             # Hides soft-deleted objects by default, and gives the option to show all objects.
+        list_display = [..., 'soft_delete_button']        # Adds a column on the admin list with a button to delete/undelete the object
+        readonly_fields = [..., 'soft_delete_button']     # Adds a button on the detail list to delete/undelete the object
         ...
-
 
 
 References
 ----------
 - https://github.com/scoursen/django-softdelete was an inspiration
 
-
-To work on this code
---------------------
-
-    pip install -e .
-
-To run tests:
-
-    tox
-
-To release a version to pypi:
-- Edit \_\_version\_\_ in \_\_init\_\_.py
-- Push and wait for the build to succeed
-- Create a release in github, travis will build and deploy the new version to pypi: https://pypi.python.org/pypi/django-tombstones
 
