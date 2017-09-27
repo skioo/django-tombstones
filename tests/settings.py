@@ -10,7 +10,7 @@ DATABASES = {
     },
 }
 
-SECRET_KEY = 'django_datatrans_tests_secret_key'
+SECRET_KEY = 'not_so_secret'
 
 # Use a fast hasher to speed up tests.
 PASSWORD_HASHERS = [

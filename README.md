@@ -2,6 +2,9 @@ django-tombstones
 =================
 
 [![Build Status](https://travis-ci.org/skioo/django-tombstones.svg?branch=master)](https://travis-ci.org/skioo/django-tombstones)
+[![PyPI version](https://badge.fury.io/py/django-tombstones.svg)](https://badge.fury.io/py/django-tombstones)
+[![Requirements Status](https://requires.io/github/skioo/django-tombstones/requirements.svg?branch=master)](https://requires.io/github/skioo/django-tombstones/requirements/?branch=master)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 
 Unintrusive soft-delete for django.
@@ -32,14 +35,14 @@ Requirements
 ------------
 
 * Python: 3.4 and over
-* Django: Tested with django 1.11
+* Django: 1.8 or 1.10 and over
 * django.contrib.contenttypes
 
 
 Usage
 -----
 
-Add tombstone to your `INSTALLED_APPS`, together with the required contenttypes app (most likely already an installed app):
+Add tombstones to your `INSTALLED_APPS`, together with the required contenttypes app (most likely already an installed app):
 
     INSTALLED_APPS = (
     ...
