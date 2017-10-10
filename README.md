@@ -36,13 +36,13 @@ Requirements
 
 * Python: 3.4 and over
 * Django: 1.8 or 1.10 and over
-* django.contrib.contenttypes
 
 
 Usage
 -----
 
-Add tombstones to your `INSTALLED_APPS`, together with the required contenttypes app (most likely already an installed app):
+Add tombstones to your `INSTALLED_APPS`, together with the contenttypes app  that comes with django
+(it's most likely already an installed app):
 
     INSTALLED_APPS = (
     ...
