@@ -5,7 +5,7 @@ from django.db import models
 
 class Tombstone(models.Model):
     created = models.DateTimeField(auto_now_add=True)
-    content_type = models.ForeignKey(ContentType)
+    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
     object_id = models.UUIDField(db_index=True)
     content_object = GenericForeignKey()
 
