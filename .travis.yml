@@ -14,12 +14,24 @@ matrix:
     env: TOXENV=py35-django111-test
   - python: '3.6'
     env: TOXENV=py36-django111-test
+  - python: '3.8'
+    env: TOXENV=py38-django111-test
   - python: '3.4'
     env: TOXENV=py34-django20-test
   - python: '3.5'
     env: TOXENV=py35-django20-test
   - python: '3.6'
     env: TOXENV=py36-django20-test
+  - python: '3.8'
+    env: TOXENV=py38-django20-test
+  - python: '3.4'
+    env: TOXENV=py34-django31-test
+  - python: '3.5'
+    env: TOXENV=py35-django31-test
+  - python: '3.6'
+    env: TOXENV=py36-django31-test
+  - python: '3.8'
+    env: TOXENV=py38-django31-test
 install:
 - pip install tox
 script:
