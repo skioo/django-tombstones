@@ -1,48 +1,36 @@
+dist: xenial
+
 sudo: false
+
 language: python
-matrix:
+
+python:
+  - 3.6
+  - 3.7
+  - 3.8
+
+install: pip install tox-travis coveralls
+
+script: tox
+
+stages:
+  - test
+  - name: deploy
+    if: tag IS present
+
+jobs:
   include:
-  - python: '3.5'
-    env: TOXENV=py35-django20-checkmigrations
-  - python: '3.5'
-    env: TOXENV=py35-django20-flake
-  - python: '3.5'
-    env: TOXENV=py35-django20-coverage
-  - python: '3.4'
-    env: TOXENV=py34-django111-test
-  - python: '3.5'
-    env: TOXENV=py35-django111-test
-  - python: '3.6'
-    env: TOXENV=py36-django111-test
-  - python: '3.7'
-    env: TOXENV=py37-django111-test
-  - python: '3.8'
-    env: TOXENV=py38-django111-test
-  - python: '3.4'
-    env: TOXENV=py34-django20-test
-  - python: '3.5'
-    env: TOXENV=py35-django20-test
-  - python: '3.6'
-    env: TOXENV=py36-django20-test
-  - python: '3.7'
-    env: TOXENV=py37-django20-test
-  - python: '3.8'
-    env: TOXENV=py38-django20-test
-  - python: '3.6'
-    env: TOXENV=py36-django31-test
-  - python: '3.7'
-    env: TOXENV=py37-django31-test
-  - python: '3.8'
-    env: TOXENV=py38-django31-test
-install:
-- pip install tox
-script:
-- tox
-deploy:
-  provider: pypi
-  user: skioo
-  password:
-    secure: lMO3D7e0SQQB7XoX5VkksqRMe+HMMOgCLub7f/7Qd3lEQUHNreSuc1r3v+Td8iu6vDQ/DQ/4OxN0Zr7+XaWipgKGbv0hQYDOgQN6xeY+kjLwMssHausdPzZjjBEcSG/jTMK7dwdRME7IR0Lr1YvarL/G/sn5vqu/rd5erc2bxXJbFkMfFnGbkWRZBSN3Tdvn/enqQ1PigAquYP/s9A7eZv7cenrE2FjNKVdziD8AfzcXeaWfwfVMdIzd7f0Zv6YmM6ME4sj/iPrInhDNKFFbNYuIBnLQ44HLfnYZGx63jxO85fdayRB6j4fdLUoMJYTDLf90oCywTmaooRt2KY5dvl5EPY9Q9ClIiklTHWdF4RnPBWQ4C8z6LsZbszhnnRJBqC1TKmnCeE5jq3Nm3lbOVkf+S84Ex2Il4af8RweegDJNLV06u/Hn0sap/wNynoqE6jVeS9KAQxyrTx4CzWYKvBVO/GpjKhvRUvXzRY/ZmFQXNEOqSZVeMvXY7MJJROY6CDj/Fktwfx5wAh9BtiBJCdagSZAagW7B1bj1xZ/+M+iMd/MTIT8CGkWbyndHs3mCMnsl33qF3PGq5zN8ok4Al6wyZ6iUlVPFhQVbBnga/8SJKLP/9bXJFaa9xdKc1/t99n3ADuiX4Cq5RRKffgC+Km/+okaQDBUYDygota6Q+84=
-  distribution: sdist bdist_wheel
-  on:
-    tags: true
+    - stage: deploy
+      install: skip
+      script: skip
+      deploy:
+        provider: pypi
+        user: skioo
+        password:
+          secure: lMO3D7e0SQQB7XoX5VkksqRMe+HMMOgCLub7f/7Qd3lEQUHNreSuc1r3v+Td8iu6vDQ/DQ/4OxN0Zr7+XaWipgKGbv0hQYDOgQN6xeY+kjLwMssHausdPzZjjBEcSG/jTMK7dwdRME7IR0Lr1YvarL/G/sn5vqu/rd5erc2bxXJbFkMfFnGbkWRZBSN3Tdvn/enqQ1PigAquYP/s9A7eZv7cenrE2FjNKVdziD8AfzcXeaWfwfVMdIzd7f0Zv6YmM6ME4sj/iPrInhDNKFFbNYuIBnLQ44HLfnYZGx63jxO85fdayRB6j4fdLUoMJYTDLf90oCywTmaooRt2KY5dvl5EPY9Q9ClIiklTHWdF4RnPBWQ4C8z6LsZbszhnnRJBqC1TKmnCeE5jq3Nm3lbOVkf+S84Ex2Il4af8RweegDJNLV06u/Hn0sap/wNynoqE6jVeS9KAQxyrTx4CzWYKvBVO/GpjKhvRUvXzRY/ZmFQXNEOqSZVeMvXY7MJJROY6CDj/Fktwfx5wAh9BtiBJCdagSZAagW7B1bj1xZ/+M+iMd/MTIT8CGkWbyndHs3mCMnsl33qF3PGq5zN8ok4Al6wyZ6iUlVPFhQVbBnga/8SJKLP/9bXJFaa9xdKc1/t99n3ADuiX4Cq5RRKffgC+Km/+okaQDBUYDygota6Q+84=
+        distribution: sdist bdist_wheel
+        on:
+          tags: true
+
+after_success:
+  - coveralls
