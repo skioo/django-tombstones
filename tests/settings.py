@@ -18,6 +18,8 @@ PASSWORD_HASHERS = [
 
 INSTALLED_APPS = [
     'django.contrib.admin',
+    'django.contrib.auth',
+    'django.contrib.messages',
     'django.contrib.contenttypes',
     'tombstones',
     'tests',
