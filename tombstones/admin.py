@@ -1,9 +1,8 @@
-from django.conf.urls import url
 from django.contrib import admin
 from django.contrib.admin import RelatedOnlyFieldListFilter
 from django.contrib.contenttypes.models import ContentType
 from django.http import HttpResponseRedirect
-from django.urls import reverse
+from django.urls import re_path, reverse
 from django.utils.html import format_html
 from django.utils.translation import ugettext_lazy as _
 
@@ -82,12 +81,12 @@ class SoftDeleteModelAdmin(admin.ModelAdmin):
 
     def get_urls(self):
         custom_urls = [
-            url(r'^(?P<content_type_id>.+)/(?P<object_id>.+)/soft_delete/$',
-                self.admin_site.admin_view(do_soft_delete),
-                name='tombstones-soft-delete'),
-            url(r'^(?P<content_type_id>.+)/(?P<object_id>.+)/soft_undelete/$',
-                self.admin_site.admin_view(do_soft_undelete),
-                name='tombstones-soft-undelete')
+            re_path(r'^(?P<content_type_id>.+)/(?P<object_id>.+)/soft_delete/$',
+                    self.admin_site.admin_view(do_soft_delete),
+                    name='tombstones-soft-delete'),
+            re_path(r'^(?P<content_type_id>.+)/(?P<object_id>.+)/soft_undelete/$',
+                    self.admin_site.admin_view(do_soft_undelete),
+                    name='tombstones-soft-undelete')
         ]
         return custom_urls + super().get_urls()
 
