@@ -4,7 +4,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.http import HttpResponseRedirect
 from django.urls import re_path, reverse
 from django.utils.html import format_html
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 
 from .models import Tombstone
 
